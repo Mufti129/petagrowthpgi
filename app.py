@@ -10,7 +10,7 @@ import os
 # Konfigurasi Halaman Streamlit
 st.set_page_config(
     page_title="Dashboard Peta Growth Cabang PGI",
-    page_icon="📍",
+    page_icon="",
     layout="wide"
 )
 
@@ -142,4 +142,4 @@ if df_clean is not None:
             'Rata_Rata_Growth': 'Rp {:,.0f}'
         }), use_container_width=True)
     with col2:
-        st.info(f"Peta di atas mengelompokkan cabang menjadi **{k} cluster** berdasarkan kedekatan wilayah geografisnya (Latitude & Longitude). Anda dapat mengubah jumlah kelompok ini di sidebar sebelah kiri.")
+        st.info(f"Peta di atas mengelompokkan cabang menjadi **{k} cluster** berdasarkan kedekatan wilayah geografisnya (Latitude & Longitude).")
