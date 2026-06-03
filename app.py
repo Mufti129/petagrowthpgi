@@ -19,38 +19,35 @@ st.markdown("Aplikasi ini mengambil data secara otomatis dari repositori dan mem
 # --- KONFIGURASI SUMBER DATA ---
 # Anda bisa menggunakan URL GitHub Raw jika ingin sinkronisasi cloud penuh,
 # namun secara default system akan membaca file lokal di dalam folder `data/` sesuai struktur Anda.
-GITHUB_RAW_URL = 'https://raw.githubusercontent.com/your-username/peta-growth-pgi/main/data/performa-cabang.xlsx'
-LOCAL_DATA_PATH = 'data/performa-cabang.xlsx'
+# --- MENDAPATKAN DATA ---
+# Menggunakan sidebar untuk fleksibilitas: Bisa baca file default atau upload baru
+st.sidebar.header("Pengaturan Data")
+uploaded_file = st.sidebar.file_uploader("Upload File Performa Cabang (Excel)", type=["xlsx"])
 
-@st.cache_data(ttl=600)  # Menyimpan data di cache selama 10 menit
-def load_data():
-    # Jalur Pertama: Coba ambil dari file lokal di dalam struktur folder proyek
-    if os.path.exists(LOCAL_DATA_PATH):
-        try:
-            df = pd.read_excel(LOCAL_DATA_PATH)
-            df.columns = df.columns.str.strip()
-            return df, "Lokal Proyek (data/performa-cabang.xlsx)"
-        except Exception as e:
-            st.warning(f"Gagal membaca data lokal: {e}")
-            
-    # Jalur Kedua: Coba ambil dari GitHub Raw URL jika file lokal tidak ditemukan (saat dideploy)
+@st.cache_data
+def load_data(file_path_or_buffer):
     try:
-        df = pd.read_excel(GITHUB_RAW_URL)
-        df.columns = df.columns.str.strip()
-        return df, "GitHub Cloud Remote"
+        df = pd.read_excel(file_path_or_buffer)
+        return df
     except Exception as e:
-        st.error(f"Gagal mengambil data dari repositori: {e}")
-        return None, None
+        st.error(f"Gagal membaca data: {e}")
+        return None
 
-# Memuat data berdasarkan struktur
-df_clean, data_source = load_data()
+# Cek sumber data
+if uploaded_file is not None:
+    df_clean = load_data(uploaded_file)
+else:
+    # Path default di lokal/GitHub repo
+    default_path = 'data/performa-cabang.xlsx'
+    if os.path.exists(default_path):
+        df_clean = load_data(default_path)
+    else:
+        st.info("Silakan upload file `.xlsx` Anda melalui sidebar untuk memulai analisis.")
+        st.stop()
 
 if df_clean is not None:
-    # Menampilkan informasi sumber data secara ringkas
-    st.info(f"Berhasil memuat data dari sumber: **{data_source}**")
-    
     # Menampilkan preview data di expander
-    with st.expander("Lihat Preview Data Terbaru"):
+    with st.expander("Lihat Preview Data Mentah"):
         st.dataframe(df_clean.head(), use_container_width=True)
 
     # --- VALIDASI KOLOM MANDATORI ---
