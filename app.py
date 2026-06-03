@@ -108,7 +108,7 @@ if df_clean is not None:
             <b>Cabang:</b> {row['cabang']}<br>
             <b>Kategori:</b> <span style='font-weight:bold;'>{row[nama_kolom_kategori]}</span><br><hr style='margin:4px 0;'>
             <b>Omzet Jan25:</b> Rp {row[col_jan]:,.0f}<br>
-            <b>Omzet Mei25:</b> Rp {row[col_mei]:,.0f}<br>
+            <b>Omzet Mei26:</b> Rp {row[col_mei]:,.0f}<br>
             <b>Growth:</b> <span style='color:{"green" if row["Growth"] >= 0 else "red"}; font-weight:bold;'>Rp {row["Growth"]:,.0f}</span><br>
             <b>Persen Growth:</b> {row['Persen Growth']}<br>
             <b>Bulan Beroperasi :</b> {row['lama_buka_bulan']}<br>
