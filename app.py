@@ -48,7 +48,7 @@ else:
 if df_clean is not None:
     # Menampilkan preview data di expander
     with st.expander("Lihat Preview Data Mentah"):
-        st.dataframe(df_clean.head(), use_container_width=True)
+        st.dataframe(df_clean.head(1000), use_container_width=True)
 
     # --- VALIDASI KOLOM MANDATORI ---
     nama_kolom_kategori = None
