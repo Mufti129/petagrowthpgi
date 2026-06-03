@@ -42,7 +42,7 @@ else:
     if os.path.exists(default_path):
         df_clean = load_data(default_path)
     else:
-        st.info("Silakan upload file `.xlsx` Anda melalui sidebar untuk memulai analisis.")
+        st.info("Silakan upload file `.xlsx` melalui sidebar untuk memulai analisis.")
         st.stop()
 
 if df_clean is not None:
@@ -67,7 +67,7 @@ if df_clean is not None:
     col_mei = 'Omset Mei26' if 'Omset Mei26' in df_clean.columns else ('Omset Mei25' if 'Omset Mei25' in df_clean.columns else df_clean.columns[3])
 
     # --- INTEGRASI PETA FOLIUM ---
-    st.subheader("🗺️ Peta Interaktif Sebaran Cabang")
+    st.subheader("Peta Interaktif Sebaran Cabang")
     
     # Inisialisasi Map Utama (tiles=None agar peta dasar bisa masuk ke checklist LayerControl)
     map_center = [df_clean['latitude_cabang'].mean(), df_clean['longitude_cabang'].mean()]
