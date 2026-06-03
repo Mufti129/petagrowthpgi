@@ -14,7 +14,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📍 Analisis Spasial & Growth Cabang PGI")
+st.title("Analisis Spasial & Growth Cabang PGI")
 st.markdown("Aplikasi ini menampilkan visualisasi data sebaran growth cabang dan pengelompokan wilayah.")
 
 # --- MENDAPATKAN DATA ---
@@ -40,12 +40,12 @@ else:
     if os.path.exists(default_path):
         df_clean = load_data(default_path)
     else:
-        st.info("💡 Silakan upload file `.xlsx` Anda melalui sidebar untuk memulai analisis.")
+        st.info("Silakan upload file `.xlsx` Anda melalui sidebar untuk memulai analisis.")
         st.stop()
 
 if df_clean is not None:
     # Menampilkan preview data di expander
-    with st.expander("👀 Lihat Preview Data Mentah"):
+    with st.expander("Lihat Preview Data Mentah"):
         st.dataframe(df_clean.head(), use_container_width=True)
 
     # --- KMEANS CLUSTERING (INTERAKTIF) ---
@@ -58,7 +58,7 @@ if df_clean is not None:
     df_clean['cluster'] = kmeans.fit_predict(X)
 
     # --- PEMBUATAN PETA FOLIUM ---
-    st.subheader("🗺️ Peta Interaktif Sebaran Cabang")
+    st.subheader("Peta Interaktif Sebaran Cabang")
     
     # Inisialisasi Map Utama
     map_center = [df_clean['latitude_cabang'].mean(), df_clean['longitude_cabang'].mean()]
@@ -126,7 +126,7 @@ if df_clean is not None:
 
     # --- STATISTIK TAMBAHAN ---
     st.markdown("---")
-    st.subheader("📊 Ringkasan Cluster Geografis")
+    st.subheader("Ringkasan Cluster Geografis")
     
     # Grouping ringkas berdasarkan cluster yang terbentuk dari koordinat
     summary_cluster = df_clean.groupby('cluster').agg(
@@ -142,4 +142,4 @@ if df_clean is not None:
             'Rata_Rata_Growth': 'Rp {:,.0f}'
         }), use_container_width=True)
     with col2:
-        st.info(f"💡 Peta di atas mengelompokkan cabang menjadi **{k} cluster** berdasarkan kedekatan wilayah geografisnya (Latitude & Longitude). Anda dapat mengubah jumlah kelompok ini di sidebar sebelah kiri.")
+        st.info(f"Peta di atas mengelompokkan cabang menjadi **{k} cluster** berdasarkan kedekatan wilayah geografisnya (Latitude & Longitude). Anda dapat mengubah jumlah kelompok ini di sidebar sebelah kiri.")
