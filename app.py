@@ -183,5 +183,15 @@ if df_clean is not None:
 
     # Render peta ke tampilan web Streamlit
     st_folium(m, width=1100, height=600, returned_objects=[])
+
+    # --- FOOTER KONTAK PERSON (HALAMAN UTAMA) ---
+    st.markdown("---")
+    with st.expander("ℹ️ Informasi Kontak & Dukungan Teknis"):
+        col_info, col_space = st.columns([1, 2])
+        with col_info:
+            st.markdown("""
+            **Narahubung Proyek:** 👤 **Mukhammad Rekza Mufti** 💼 *Data Analyst* – Divisi Bisnis PGI  
+            """)
+            # Anda bisa menambahkan st.markdown("[📧 Email Kami](mailto:email@pgi.com)") jika diperlukan nanti
 else:
     st.error(" File data `performa-cabang.xlsx` tidak ditemukan di folder `data/` maupun di remote GitHub!")
