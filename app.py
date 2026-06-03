@@ -186,11 +186,11 @@ if df_clean is not None:
 
     # --- FOOTER KONTAK PERSON (HALAMAN UTAMA) ---
     st.markdown("---")
-    with st.expander("ℹ️ Informasi Kontak & Dukungan Teknis"):
+    with st.expander("Informasi Kontak & Dukungan Teknis"):
         col_info, col_space = st.columns([1, 2])
         with col_info:
             st.markdown("""
-            **Narahubung Proyek:** 👤 **Mukhammad Rekza Mufti** 💼 *Data Analyst* – Divisi Bisnis PGI  
+            **Narahubung Proyek:****Mukhammad Rekza Mufti***Data Analyst* – Divisi Bisnis PGI - 081536175933 
             """)
             # Anda bisa menambahkan st.markdown("[📧 Email Kami](mailto:email@pgi.com)") jika diperlukan nanti
 else:
