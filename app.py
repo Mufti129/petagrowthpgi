@@ -14,64 +14,88 @@ st.set_page_config(
 )
 
 st.title("Analisis Spasial Performa & Growth Cabang PGI")
-st.markdown("Aplikasi ini memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang PGI secara interaktif.")
+st.markdown("Aplikasi ini mengambil data secara otomatis dari repositori dan memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang.")
 
-# --- MENDAPATKAN DATA ---
-st.sidebar.header("⚙️ Pengaturan Data")
-uploaded_file = st.sidebar.file_uploader("Upload File Performa Cabang (Excel)", type=["xlsx"])
+# --- KONFIGURASI SUMBER DATA ---
+# Anda bisa menggunakan URL GitHub Raw jika ingin sinkronisasi cloud penuh,
+# namun secara default system akan membaca file lokal di dalam folder `data/` sesuai struktur Anda.
+GITHUB_RAW_URL = 'https://raw.githubusercontent.com/your-username/peta-growth-pgi/main/data/performa-cabang.xlsx'
+LOCAL_DATA_PATH = 'data/performa-cabang.xlsx'
 
-@st.cache_data
-def load_data(file_path_or_buffer):
+@st.cache_data(ttl=600)  # Menyimpan data di cache selama 10 menit
+def load_data():
+    # Jalur Pertama: Coba ambil dari file lokal di dalam struktur folder proyek
+    if os.path.exists(LOCAL_DATA_PATH):
+        try:
+            df = pd.read_excel(LOCAL_DATA_PATH)
+            df.columns = df.columns.str.strip()
+            return df, "Lokal Proyek (data/performa-cabang.xlsx)"
+        except Exception as e:
+            st.warning(f"Gagal membaca data lokal: {e}")
+            
+    # Jalur Kedua: Coba ambil dari GitHub Raw URL jika file lokal tidak ditemukan (saat dideploy)
     try:
-        df = pd.read_excel(file_path_or_buffer)
-        return df
+        df = pd.read_excel(GITHUB_RAW_URL)
+        df.columns = df.columns.str.strip()
+        return df, "GitHub Cloud Remote"
     except Exception as e:
-        st.error(f"Gagal membaca data: {e}")
-        return None
+        st.error(f"Gagal mengambil data dari repositori: {e}")
+        return None, None
 
-# Cek sumber data (Uploader vs File Lokal)
-if uploaded_file is not None:
-    df_clean = load_data(uploaded_file)
-else:
-    default_path = 'data/performa-cabang.xlsx'
-    if os.path.exists(default_path):
-        df_clean = load_data(default_path)
-    else:
-        st.info("Silakan unggah file `performa-cabang.xlsx` melalui sidebar untuk menampilkan peta.")
-        st.stop()
+# Memuat data berdasarkan struktur
+df_clean, data_source = load_data()
 
 if df_clean is not None:
-    # Preview Data Tambahan
-    with st.expander("👀 Lihat Preview Data"):
+    # Menampilkan informasi sumber data secara ringkas
+    st.info(f"Berhasil memuat data dari sumber: **{data_source}**")
+    
+    # Menampilkan preview data di expander
+    with st.expander("Lihat Preview Data Terbaru"):
         st.dataframe(df_clean.head(), use_container_width=True)
+
+    # --- VALIDASI KOLOM MANDATORI ---
+    nama_kolom_kategori = None
+    for col in df_clean.columns:
+        if col.lower() == 'kategori':
+            nama_kolom_kategori = col
+            break
+            
+    if nama_kolom_kategori is None:
+        st.error("**Error:** Kolom 'Kategori' tidak ditemukan di dalam file Excel Anda!")
+        st.markdown(f"Kolom yang terdeteksi di dalam file adalah: `{list(df_clean.columns)}`")
+        st.stop()
 
     # Antisipasi jika ada perbedaan penamaan kolom atau typo bawaan file (Jan25 vs Mei26)
     col_jan = 'Omset Jan25' if 'Omset Jan25' in df_clean.columns else df_clean.columns[2]
     col_mei = 'Omset Mei26' if 'Omset Mei26' in df_clean.columns else ('Omset Mei25' if 'Omset Mei25' in df_clean.columns else df_clean.columns[3])
 
-    # --- INGEREGRASIKAN PETA FOLIUM ---
-    st.subheader("Peta Interaktif Sebaran Cabang")
+    # --- INTEGRASI PETA FOLIUM ---
+    st.subheader("🗺️ Peta Interaktif Sebaran Cabang")
     
-    # Inisialisasi Map Utama di titik tengah koordinat cabang
+    # Inisialisasi Map Utama (tiles=None agar peta dasar bisa masuk ke checklist LayerControl)
     map_center = [df_clean['latitude_cabang'].mean(), df_clean['longitude_cabang'].mean()]
-    m = folium.Map(location=map_center, zoom_start=11, tiles='CartoDB positron')
+    m = folium.Map(location=map_center, zoom_start=11, tiles=None)
 
-    # Layer 1: Heatmap Growth
+    # 1. Tambahkan Base Map sebagai Layer yang bisa diceklis (overlay=False menjadikannya pilihan Radio Button)
+    folium.TileLayer('CartoDB positron', name='CartoDB positron', control=True, overlay=False).add_to(m)
+    folium.TileLayer('OpenStreetMap', name='OpenStreetMap', control=True, overlay=False).add_to(m)
+
+    # 2. Layer 1: Heatmap Sebaran Growth
     fg1 = folium.FeatureGroup(name='Heatmap Sebaran Growth', show=False)
     heat_omzet = [[row['latitude_cabang'], row['longitude_cabang'], row['Growth']] for i, row in df_clean.iterrows()]
     HeatMap(heat_omzet, radius=15, blur=20, gradient={0.4: 'blue', 0.7: 'lime', 1: 'yellow'}).add_to(fg1)
 
-    # Layer 2a & 2b: Berdasarkan Tren Growth (Default sembunyikan agar tidak menumpuk dengan kategori)
-    fg_positive_growth = folium.FeatureGroup(name='Tren: Positive Growth', show=False)
-    fg_negative_growth = folium.FeatureGroup(name='Tren: Negative Growth', show=False)
+    # 3. Layer 2a & 2b: Sebaran Tren Growth Positive / Negative
+    fg_positive_growth = folium.FeatureGroup(name='Positive Growth', show=False)
+    fg_negative_growth = folium.FeatureGroup(name='Negative Growth', show=False)
 
-    # Layer 3a - 3d: Berdasarkan Variabel Kategori Baru (Default tampilkan)
+    # 4. Layer 3a - 3d: Berdasarkan Variabel Kategori Performa (Default langsung dicentang/show=True)
     fg_sangat_baik = folium.FeatureGroup(name='Kategori: Sangat Baik', show=True)
     fg_baik = folium.FeatureGroup(name='Kategori: Baik', show=True)
     fg_kurang_baik = folium.FeatureGroup(name='Kategori: Kurang Baik', show=True)
     fg_jelek = folium.FeatureGroup(name='Kategori: Jelek', show=True)
 
-    # Definisi warna kategori sesuai script terbaru Anda
+    # Definisi warna penanda kategori
     category_colors = {
         'sangat baik': 'blue',
         'baik': 'green',
@@ -79,13 +103,13 @@ if df_clean is not None:
         'jelek': 'red'
     }
 
-    # Perulangan untuk memetakan marker ke masing-masing FeatureGroup
+    # Perulangan untuk memetakan marker cabang ke masing-masing FeatureGroup
     for i, row in df_clean.iterrows():
-        # Membangun popup HTML yang memuat semua variabel baru
+        # Membangun popup HTML yang memuat semua variabel secara mendetail
         popup_content = f"""
         <div style='font-family: Arial, sans-serif; font-size: 12px; min-width: 180px;'>
             <b>Cabang:</b> {row['cabang']}<br>
-            <b>Kategori:</b> <span style='font-weight:bold;'>{row['Kategori']}</span><br><hr style='margin:4px 0;'>
+            <b>Kategori:</b> <span style='font-weight:bold;'>{row[nama_kolom_kategori]}</span><br><hr style='margin:4px 0;'>
             <b>Omzet Jan25:</b> Rp {row[col_jan]:,.0f}<br>
             <b>Omzet Mei25:</b> Rp {row[col_mei]:,.0f}<br>
             <b>Growth:</b> <span style='color:{"green" if row["Growth"] >= 0 else "red"}; font-weight:bold;'>Rp {row["Growth"]:,.0f}</span><br>
@@ -93,7 +117,7 @@ if df_clean is not None:
         </div>
         """
         
-        # 1. Plotting ke Group Tren (Positive / Negative)
+        # Plotting ke Group Tren (Positive / Negative)
         trend_color = 'green' if row['Growth'] >= 0 else 'red'
         target_trend_fg = fg_positive_growth if row['Growth'] >= 0 else fg_negative_growth
         
@@ -106,8 +130,8 @@ if df_clean is not None:
             popup=folium.Popup(popup_content, max_width=300)
         ).add_to(target_trend_fg)
 
-        # 2. Plotting ke Group Kategori Baru
-        kategori_clean = str(row['Kategori']).strip().lower()
+        # Plotting ke Group Kategori Performa
+        kategori_clean = str(row[nama_kolom_kategori]).strip().lower()
         marker_color = category_colors.get(kategori_clean, 'gray')
 
         marker_kategori = folium.CircleMarker(
@@ -128,7 +152,7 @@ if df_clean is not None:
         elif kategori_clean == 'jelek':
             marker_kategori.add_to(fg_jelek)
 
-    # Masukkan seluruh komponen layer ke peta
+    # Memasukkan seluruh komponen layer ke objek peta utama
     fg1.add_to(m)
     fg_positive_growth.add_to(m)
     fg_negative_growth.add_to(m)
@@ -137,10 +161,10 @@ if df_clean is not None:
     fg_kurang_baik.add_to(m)
     fg_jelek.add_to(m)
 
-    # Tambahkan kontrol layer di pojok kanan atas peta
+    # Tambahkan kontrol layer di pojok kanan atas peta (Daftar ceklist sesuai permintaan)
     folium.LayerControl(collapsed=False).add_to(m)
 
-    # Penyesuaian Legend HTML agar tampil rapi di container web Streamlit
+    # Penyusunan Legend HTML kustom agar informatif di layar dashboard
     legend_html = '''
          <div style="position: fixed; 
                      bottom: 30px; left: 30px; width: 190px; height: auto; 
@@ -160,20 +184,7 @@ if df_clean is not None:
          '''
     m.get_root().html.add_child(folium.Element(legend_html))
 
-    # Tampilkan objek peta ke web interface Streamlit
+    # Render peta ke tampilan web Streamlit
     st_folium(m, width=1100, height=600, returned_objects=[])
-
-    # --- ANALISIS WRAPPER / RINGKASAN ---
-    st.markdown("---")
-    st.subheader("Analisis Distribusi Kategori Performa")
-    
-    # Tampilkan matriks jumlah cabang per kategori secara dinamis
-    if 'Kategori' in df_clean.columns:
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            summary_cat = df_clean['Kategori'].value_index if hasattr(df_clean['Kategori'], 'value_index') else df_clean['Kategori'].value_counts()
-            st.dataframe(summary_cat, use_container_width=True)
-        with col2:
-            avg_growth = df_clean.groupby('Kategori')['Growth'].mean().reset_index()
-            st.markdown("**Rata-rata Nilai Growth per Kategori:**")
-            st.dataframe(avg_growth.style.format({'Growth': 'Rp {:,.0f}'}), use_container_width=True)
+else:
+    st.error(" File data `performa-cabang.xlsx` tidak ditemukan di folder `data/` maupun di remote GitHub!")
