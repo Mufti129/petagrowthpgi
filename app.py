@@ -32,7 +32,7 @@ def check_password():
         user_password = st.text_input("Password", type="password", placeholder="Masukkan password di sini")
         
         if st.button("Masuk"):
-            if user_password == "pgi1":
+            if user_password == "1juta$":
                 st.session_state["password_correct"] = True
                 st.rerun()  # Muat ulang halaman untuk menampilkan dashboard
             else:
