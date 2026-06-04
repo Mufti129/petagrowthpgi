@@ -12,6 +12,40 @@ st.set_page_config(
     page_icon="",
     layout="wide"
 )
+# --- SISTEM LOGIN AKSES (PASSWORD PROTECTED) ---
+def check_password():
+    """Mengembalikan True jika pengguna memasukkan password yang benar."""
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    # Jika sudah sukses login sebelumnya, langsung lewat
+    if st.session_state["password_correct"]:
+        return True
+
+    # Tampilan form login jika belum sukses
+    st.center = st.columns([1, 2, 1])
+    with st.center[1]:
+        st.title("🔒 Akses Terbatas")
+        st.write("Silakan masukkan password untuk mengakses Dashboard PGI.")
+        
+        # Input password (karakter disamarkan otomatis)
+        user_password = st.text_input("Password", type="password", placeholder="Masukkan password di sini")
+        
+        if st.button("Masuk"):
+            if user_password == "pgi1":
+                st.session_state["password_correct"] = True
+                st.rerun()  # Muat ulang halaman untuk menampilkan dashboard
+            else:
+                st.error("❌ Password salah! Silakan hubungi Data Analyst Divisi Bisnis PGI.")
+                
+        return False
+
+# Jalankan pengecekan login terlebih dahulu
+if check_password():
+
+
+
+
 
 st.title("Analisis Spasial Performa & Growth Cabang PGI")
 st.markdown("Aplikasi ini mengambil data secara otomatis dari repositori dan memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang.")
