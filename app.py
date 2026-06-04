@@ -41,7 +41,7 @@ def check_password():
         return False
 
 # Jalankan pengecekan login terlebih dahulu
-if check_password():
+    if check_password():
 
 st.title("Analisis Spasial Performa & Growth Cabang PGI")
 st.markdown("Aplikasi ini mengambil data secara otomatis dari repositori dan memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang.")
