@@ -44,7 +44,7 @@ def check_password():
 if check_password():
 
     st.title("Analisis Spasial Performa & Growth Cabang PGI")
-    st.markdown("Aplikasi ini mengambil data secara otomatis dari repositori Ddan yang anda upload serta memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang.")
+    st.markdown("Aplikasi ini memetakan sebaran kontribusi growth serta kategorisasi performa setiap cabang.")
     
     # --- KONFIGURASI SUMBER DATA ---
     # Anda bisa menggunakan URL GitHub Raw jika ingin sinkronisasi cloud penuh,
