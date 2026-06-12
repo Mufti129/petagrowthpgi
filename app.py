@@ -36,7 +36,7 @@ def check_password():
                 st.session_state["password_correct"] = True
                 st.rerun()  # Muat ulang halaman untuk menampilkan dashboard
             else:
-                st.error("❌ Password salah! Silakan hubungi Data Analyst Divisi Bisnis PGI.")
+                st.error("❌ Password salah! Silakan hubungi Mukhammad Rekza Mufti (081536175933)- Data Analyst - Divisi Bisnis - Pusat Gadai Indonesia.")
                 
         return False
 
